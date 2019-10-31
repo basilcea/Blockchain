@@ -5,7 +5,8 @@ import json
 from time import time
 from uuid import uuid4
 
-from flask import Flask, jsonify, request , render_template , Blueprint
+from flask import Flask, jsonify, request , render_template
+from flask_cors import CORS
 import sys
 
 
@@ -130,13 +131,16 @@ class Blockchain(object):
 
 # Instantiate our Node
 app = Flask(__name__)
+CORS(app)
 
 # Generate a globally unique address for this node
 node_identifier = str(uuid4()).replace('-', '')
 
 # Instantiate the Blockchain
 blockchain = Blockchain()
-
+@app.route('/' , methods=['GET'])
+def index():
+    return render_template('index.html')
 
 @app.route('/mine', methods=['POST'])
 def mine():
@@ -180,29 +184,29 @@ def full_chain():
     return jsonify(response), 200
 
 @app.route('/last_block', methods=['GET'])
-    def last_block():
-        response = { 'last_block': blockchain.last_block}
-        return jsonify(response), 200
+def last_block():
+    response = { 'last_block': blockchain.last_block}
+    return jsonify(response), 200
 
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
 # get the values in json format
-values = request.get_json()
+    values = request.get_json()
 # check that the required fields exist
-required_fields = ['sender', 'recipient', 'amount']
+    required_fields = ['sender', 'recipient', 'amount']
 
-if not all(k in values for k in required_fields):
-    response = { 'message': 'Error Missing values' }
-    return jsonify(response), 400
+    if not all(k in values for k in required_fields):
+        response = { 'message': 'Error Missing values' }
+        return jsonify(response), 400
 
-# create a new transaction
-index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
+    # create a new transaction
+    index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
 
-# set the response object with a message that the transaction will be added at the index
-response = { 'message': f'Transaction will be added to Block {index}'}
-# return the response
-return jsonify(response), 201
+    # set the response object with a message that the transaction will be added at the index
+    response = { 'message': f'Transaction will be added to Block {index}'}
+    # return the response
+    return jsonify(response), 201
 
 # Run the program on port 5000
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3000)
+    app.run(host='0.0.0.0', port=2020)
